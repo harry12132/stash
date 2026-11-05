@@ -8,7 +8,7 @@ Stash keeps recent clipboard items close at hand from the menu bar. Hold Option 
 
 **[Download the latest Stash DMG](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)**
 
-The currently published v1.0.1 DMG is ad-hoc signed and **not notarized**; Gatekeeper may refuse to open it. Do not treat that download as install-ready. The release workflow is being updated to publish only Apple-notarized builds, with a larger app icon, Applications shortcut, and clear drag-to-install instructions.
+The v1.0.2 DMG includes a larger app icon, an Applications shortcut, and visible drag-to-install instructions. The app is still ad-hoc signed and **not notarized**, so Gatekeeper may refuse to open it; the new installer layout does not remove that warning.
 
 If there is no published release yet, build Stash from source using the instructions below.
 
@@ -49,7 +49,7 @@ Clipboard history is stored locally. It can contain sensitive information, so St
 1. Download the latest DMG: [Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)
 2. Open the DMG and copy `Stash.app` to **Applications**.
 3. Launch Stash from **Applications**.
-4. Open Stash from Applications. A properly notarized release should open without an unidentified-developer or malware warning. If macOS reports that it cannot verify the app, do not bypass the warning; report the release version so its signature and notarization can be checked.
+4. Open Stash from Applications. This build is not notarized, so macOS may block it. Do not bypass the malware warning; wait for a notarized release.
 
 Stash runs from the menu bar and does not add a Dock icon.
 
