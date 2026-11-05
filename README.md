@@ -6,7 +6,7 @@ Stash keeps recent clipboard items close at hand from the menu bar. Hold Option 
 
 ## Download
 
-**[Download the latest release](https://github.com/harry12132/stash/releases/latest)**
+**[Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)**
 
 Releases provide a ready-to-run `Stash.app` packaged as a macOS DMG. Stash is currently distributed as an ad-hoc signed, non-notarized app, so macOS may require you to Control-click the app and choose **Open** the first time.
 
@@ -46,7 +46,7 @@ Clipboard history is stored locally. It can contain sensitive information, so St
 
 ## Install
 
-1. Download the latest DMG from [Releases](https://github.com/harry12132/stash/releases).
+1. Download the latest DMG: [Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)
 2. Open the DMG and copy `Stash.app` to **Applications**.
 3. Launch Stash from **Applications**.
 4. If macOS warns that the app is from an unidentified developer, Control-click `Stash.app`, choose **Open**, then confirm.
