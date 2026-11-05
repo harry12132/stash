@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Stash_macOS26_Source}",
+            "name": "Debug Stash",
+            "target": "Stash",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Stash"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Stash_macOS26_Source}",
+            "name": "Release Stash",
+            "target": "Stash",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Stash"
+        }
+    ]
+}
