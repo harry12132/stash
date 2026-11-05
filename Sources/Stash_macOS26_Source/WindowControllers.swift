@@ -18,7 +18,7 @@ final class HUDWindowController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.level = .floating
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isMovableByWindowBackground = false

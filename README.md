@@ -6,9 +6,9 @@ Stash keeps recent clipboard items close at hand from the menu bar. Hold Option 
 
 ## Download
 
-**[Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)**
+**[Download the latest Stash DMG](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)**
 
-Releases provide a ready-to-run `Stash.app` packaged as a macOS DMG. Stash is currently distributed as an ad-hoc signed, non-notarized app, so macOS may require you to Control-click the app and choose **Open** the first time.
+The currently published v1.0.1 DMG is ad-hoc signed and **not notarized**; Gatekeeper may refuse to open it. Do not treat that download as install-ready. The release workflow is being updated to publish only Apple-notarized builds, with a larger app icon, Applications shortcut, and clear drag-to-install instructions.
 
 If there is no published release yet, build Stash from source using the instructions below.
 
@@ -49,7 +49,7 @@ Clipboard history is stored locally. It can contain sensitive information, so St
 1. Download the latest DMG: [Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)
 2. Open the DMG and copy `Stash.app` to **Applications**.
 3. Launch Stash from **Applications**.
-4. If macOS warns that the app is from an unidentified developer, Control-click `Stash.app`, choose **Open**, then confirm.
+4. Open Stash from Applications. A properly notarized release should open without an unidentified-developer or malware warning. If macOS reports that it cannot verify the app, do not bypass the warning; report the release version so its signature and notarization can be checked.
 
 Stash runs from the menu bar and does not add a Dock icon.
 
@@ -89,12 +89,26 @@ To create a standalone app bundle:
 
 The script builds the release binary, creates `Stash.app`, copies the app resources and icon, and verifies the ad-hoc code signature.
 
-For a local DMG:
+To create a local DMG with a large app icon, an Applications shortcut, and drag-to-install instructions:
 
 ```sh
-./build-app.sh
-hdiutil create -volname "Stash" -srcfolder "Stash.app" -ov -format UDZO "Stash.dmg"
+brew install create-dmg
+./Packaging/build-dmg.sh
 ```
+
+## Release signing and notarization
+
+Automated releases require an Apple Developer Program membership, a **Developer ID Application** certificate exported as a password-protected `.p12`, and an Apple app-specific password. Add these repository Actions secrets under **Settings → Secrets and variables → Actions**:
+
+- `APPLE_DEVELOPER_ID_P12`: base64-encoded contents of the exported `.p12` certificate.
+- `APPLE_DEVELOPER_ID_P12_PASSWORD`: the password used to export that certificate.
+- `APPLE_ID`: the Apple Account email for notarization.
+- `APPLE_APP_SPECIFIC_PASSWORD`: an app-specific password for that Apple Account.
+- `APPLE_TEAM_ID`: the 10-character Apple Developer Team ID.
+
+On a Mac, copy the encoded certificate into the clipboard with `base64 -i DeveloperID.p12 | tr -d '\n' | pbcopy`, then paste it directly into the `APPLE_DEVELOPER_ID_P12` secret field. Never commit the certificate or share it in chat.
+
+The release workflow signs the app with hardened runtime, submits both the app and DMG to Apple's notarization service, staples the tickets, and verifies Gatekeeper acceptance before publishing. Without these secrets, release creation intentionally fails rather than publishing an app that macOS will block.
 
 ## Development notes
 

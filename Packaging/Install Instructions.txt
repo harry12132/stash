@@ -1,10 +1,8 @@
 Install Stash
 
-1. Copy Stash.app into your Applications folder.
-2. Open Stash from Applications.
+Drag the large Stash icon onto the Applications folder in this window.
 
-If macOS says Stash cannot be opened because it is not from an identified
-developer, Control-click Stash in Applications, choose Open, then confirm.
+Then eject this disk image and open Stash from Applications.
 
 For global keyboard shortcuts, allow Stash to monitor keyboard input under
 System Settings > Privacy & Security > Input Monitoring (called Device Control
