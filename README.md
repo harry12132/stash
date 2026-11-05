@@ -71,3 +71,7 @@ The menu-bar menu shows whether keyboard shortcuts are active and includes a sho
 ## Privacy
 
 Clipboard history can contain sensitive information. The app provides pause, exclusion, persistence-off, and clear-history controls. It does not currently detect password-manager content or automatically redact secrets. Treat the history as sensitive local data.
+
+## License
+
+Stash is licensed under the MIT License. See [LICENSE](LICENSE) for details.
