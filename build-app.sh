@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP="$ROOT/Stash.app"
 STAGING="$ROOT/.build/Stash.app.staging"
+ICON_SOURCE="$ROOT/Packaging/AppIcon.icns"
 swift build -c release
 BIN_DIR="$(cd "$ROOT" && swift build -c release --show-bin-path)"
 ICON_SOURCE="$ROOT/Packaging/AppIcon.icns"

@@ -4,13 +4,40 @@ A fast, lightweight clipboard manager for macOS.
 
 Stash keeps recent clipboard items close at hand from the menu bar. Hold Option to show the floating HUD, use Option–1 through Option–5 for quick paste, or press Option–Space to open the full library.
 
-## Download
+## Install
 
-**[Download the latest Stash DMG](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)**
+Stash is not distributed as a prebuilt app: without an Apple Developer ID, a downloaded app cannot be notarized and macOS may block it. Instead, paste this whole block into Terminal. It downloads the source, builds `Stash.app` on your Mac, installs it in `~/Applications`, opens Stash, and opens the keyboard-permission settings.
 
-The v1.0.2 DMG includes a larger app icon, an Applications shortcut, and visible drag-to-install instructions. The app is still ad-hoc signed and **not notarized**, so Gatekeeper may refuse to open it; the new installer layout does not remove that warning.
+```sh
+bash <<'STASH_INSTALL'
+set -euo pipefail
 
-If there is no published release yet, build Stash from source using the instructions below.
+if ! command -v git >/dev/null || ! command -v swift >/dev/null; then
+    echo "Install Xcode or the Xcode Command Line Tools, then run this again." >&2
+    exit 1
+fi
+
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
+git clone --depth 1 https://github.com/harry12132/stash.git "$work_dir/stash"
+cd "$work_dir/stash"
+./build-app.sh
+
+install_dir="$HOME/Applications"
+mkdir -p "$install_dir"
+ditto "$work_dir/stash/Stash.app" "$install_dir/Stash.app"
+open -a "$install_dir/Stash.app"
+sleep 2
+open "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
+
+printf '\nIn Input Monitoring (or Device Control & Access), enable Stash. '
+printf 'Return here and press Return to open Accessibility settings.\n'
+read -r
+open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+STASH_INSTALL
+```
+
+This builds the app locally rather than downloading a quarantined app binary, and does not disable Gatekeeper or grant permissions automatically. macOS permission prompts and settings must be approved by you. If Stash does not appear in a permission list, use that pane's add button to select `~/Applications/Stash.app`.
 
 ## Requirements
 
@@ -44,15 +71,6 @@ Clipboard history is stored locally. It can contain sensitive information, so St
 | **Option–Space** | Open the clipboard library |
 | **Escape** | Dismiss the HUD |
 
-## Install
-
-1. Download the latest DMG: [Download Stash for macOS](https://github.com/harry12132/stash/releases/latest/download/Stash.dmg)
-2. Open the DMG and copy `Stash.app` to **Applications**.
-3. Launch Stash from **Applications**.
-4. Open Stash from Applications. This build is not notarized, so macOS may block it. Do not bypass the malware warning; wait for a notarized release.
-
-Stash runs from the menu bar and does not add a Dock icon.
-
 ### Keyboard permissions
 
 Global keyboard shortcuts require keyboard-listening access. Open **System Settings → Privacy & Security → Input Monitoring** and enable Stash. Some macOS versions expose related controls under **Device Control & Access**.
@@ -65,7 +83,7 @@ If shortcuts are not active yet, use **Show Clipboard HUD** from the Stash menu-
 
 1. If Stash is open, choose **Quit Stash** from its menu-bar menu.
 2. If **Launch at login** is enabled, turn it off in Stash's settings or remove Stash under **System Settings → General → Login Items & Extensions**.
-3. In Applications, move `Stash.app` to the Trash. Eject the Stash disk image if it is still mounted.
+3. In `~/Applications`, move `Stash.app` to the Trash.
 4. To revoke its access, remove Stash under **System Settings → Privacy & Security → Input Monitoring** and any Accessibility/device-access permissions you granted.
 
 Removing the app keeps your local clipboard history and preferences. To erase them too, use Finder's **Go → Go to Folder…**, enter `~/Library/Application Support/Stash`, and move the `Stash` folder to the Trash. To remove saved preferences as well, run `defaults delete com.harry.Stash` in Terminal.
@@ -89,26 +107,7 @@ To create a standalone app bundle:
 
 The script builds the release binary, creates `Stash.app`, copies the app resources and icon, and verifies the ad-hoc code signature.
 
-To create a local DMG with a large app icon, an Applications shortcut, and drag-to-install instructions:
-
-```sh
-brew install create-dmg
-./Packaging/build-dmg.sh
-```
-
-## Release signing and notarization
-
-Automated releases require an Apple Developer Program membership, a **Developer ID Application** certificate exported as a password-protected `.p12`, and an Apple app-specific password. Add these repository Actions secrets under **Settings → Secrets and variables → Actions**:
-
-- `APPLE_DEVELOPER_ID_P12`: base64-encoded contents of the exported `.p12` certificate.
-- `APPLE_DEVELOPER_ID_P12_PASSWORD`: the password used to export that certificate.
-- `APPLE_ID`: the Apple Account email for notarization.
-- `APPLE_APP_SPECIFIC_PASSWORD`: an app-specific password for that Apple Account.
-- `APPLE_TEAM_ID`: the 10-character Apple Developer Team ID.
-
-On a Mac, copy the encoded certificate into the clipboard with `base64 -i DeveloperID.p12 | tr -d '\n' | pbcopy`, then paste it directly into the `APPLE_DEVELOPER_ID_P12` secret field. Never commit the certificate or share it in chat.
-
-The release workflow signs the app with hardened runtime, submits both the app and DMG to Apple's notarization service, staples the tickets, and verifies Gatekeeper acceptance before publishing. Without these secrets, release creation intentionally fails rather than publishing an app that macOS will block.
+The app bundle is ad-hoc signed for local development. Direct binary distribution without Developer ID signing and Apple notarization can trigger Gatekeeper warnings.
 
 ## Development notes
 
