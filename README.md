@@ -6,9 +6,9 @@ Stash keeps your recent clipboard items in the menu bar. Hold Option to show the
 
 ## Install
 
-Stash is currently installed by building it on your Mac. There is no prebuilt app download. You need macOS 15 or later, an Apple Silicon Mac, and Swift 6.3 or later (included with Xcode 26).
+Stash is currently installed by building it on your Mac. There is no prebuilt app download. You need macOS 15 or later, an Apple Silicon Mac, and Swift 6.3 or later (included with Xcode 26.4 or later).
 
-1. Install Xcode 26, or the Xcode 26 Command Line Tools.
+1. Install Xcode 26.4 or later, or the matching Command Line Tools.
 2. Open Terminal and run:
 
 ```sh
