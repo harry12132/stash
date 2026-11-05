@@ -6,7 +6,7 @@ Stash keeps recent clipboard items close at hand from the menu bar. Hold Option 
 
 ## Install
 
-Stash is not distributed as a prebuilt app: without an Apple Developer ID, a downloaded app cannot be notarized and macOS may block it. Instead, paste this whole block into Terminal. It downloads the source, builds `Stash.app` on your Mac, installs it in `~/Applications`, opens Stash, and opens the keyboard-permission settings.
+Stash is not distributed as a prebuilt app: without an Apple Developer ID, a downloaded app cannot be notarized and macOS may block it. Quit any running Stash copies, then paste this whole block into Terminal. It downloads the source, builds `Stash.app` on your Mac, installs it in `~/Applications`, opens Stash, and opens the keyboard-permission settings.
 
 ```sh
 bash <<'STASH_INSTALL'
@@ -37,7 +37,7 @@ open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibil
 STASH_INSTALL
 ```
 
-This builds the app locally rather than downloading a quarantined app binary, and does not disable Gatekeeper or grant permissions automatically. macOS permission prompts and settings must be approved by you. If Stash does not appear in a permission list, use that pane's add button to select `~/Applications/Stash.app`.
+This builds the app locally rather than downloading a quarantined app binary, so it should avoid the downloaded-app malware warning. It does not disable Gatekeeper or grant permissions automatically; approve macOS prompts and settings yourself. If Stash does not appear in a permission list, use that pane's add button to select `~/Applications/Stash.app`. GitHub Releases do not contain a prebuilt app or DMG.
 
 ## Requirements
 
