@@ -1,6 +1,6 @@
 # Stash
 
-Stash is a native SwiftUI/AppKit clipboard manager for macOS. Its menu-bar item opens the clipboard library and settings; hold Option to show the floating clipboard HUD.
+Stash is a native SwiftUI/AppKit clipboard manager for macOS. Hold Option to show the floating clipboard HUD. Or Option + Space to open the the clipboard library and settings.
 
 ## Build and run
 
