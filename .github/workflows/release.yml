@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build arm64 app
+        run: |
+          set -euo pipefail
+          swift build -c release --arch arm64
+          BIN_DIR="$(swift build -c release --arch arm64 --show-bin-path)"
+
+          STAGING=".build/Stash.app.staging"
+          rm -rf "$STAGING"
+          mkdir -p "$STAGING/Contents/MacOS" "$STAGING/Contents/Resources"
+
+          cp "$BIN_DIR/Stash" "$STAGING/Contents/MacOS/Stash"
+          cp "Packaging/Info.plist" "$STAGING/Contents/Info.plist"
+          cp "Sources/Stash_macOS26_Source/Resources/StashLogo.png" "$STAGING/Contents/Resources/StashLogo.png"
+          cp "Packaging/AppIcon.icns" "$STAGING/Contents/Resources/AppIcon.icns"
+
+          codesign --force --deep --identifier com.harry.Stash \
+            --requirements '=designated => identifier "com.harry.Stash"' \
+            --sign - "$STAGING"
+          codesign --verify --deep --strict "$STAGING"
+
+          rm -rf Stash.app
+          mv "$STAGING" Stash.app
+
+      - name: Verify architecture
+        run: |
+          set -euo pipefail
+          file Stash.app/Contents/MacOS/Stash
+          test "$(lipo -archs Stash.app/Contents/MacOS/Stash)" = "arm64"
+          codesign --verify --deep --strict Stash.app
+
+      - name: Create DMG
+        run: |
+          set -euo pipefail
+          hdiutil create \
+            -volname "Stash" \
+            -srcfolder "Stash.app" \
+            -ov \
+            -format UDZO \
+            "Stash.dmg"
+          hdiutil verify "Stash.dmg"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" Stash.dmg \
+            --title "Stash $GITHUB_REF_NAME" \
+            --generate-notes
