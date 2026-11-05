@@ -61,6 +61,15 @@ Automatic paste also requires the applicable Accessibility/device-access permiss
 
 If shortcuts are not active yet, use **Show Clipboard HUD** from the Stash menu-bar menu while resolving permissions.
 
+## Uninstall
+
+1. If Stash is open, choose **Quit Stash** from its menu-bar menu.
+2. If **Launch at login** is enabled, turn it off in Stash's settings or remove Stash under **System Settings → General → Login Items & Extensions**.
+3. In Applications, move `Stash.app` to the Trash. Eject the Stash disk image if it is still mounted.
+4. To revoke its access, remove Stash under **System Settings → Privacy & Security → Input Monitoring** and any Accessibility/device-access permissions you granted.
+
+Removing the app keeps your local clipboard history and preferences. To erase them too, use Finder's **Go → Go to Folder…**, enter `~/Library/Application Support/Stash`, and move the `Stash` folder to the Trash. To remove saved preferences as well, run `defaults delete com.harry.Stash` in Terminal.
+
 ## Build from source
 
 Clone the repository and run the executable:
