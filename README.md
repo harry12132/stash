@@ -4,6 +4,8 @@ A lightweight clipboard manager for macOS.
 
 Stash keeps your recent clipboard items in the menu bar. Hold Option to show the floating HUD, press Option–1 through Option–5 to paste a recent item, or use Option–Space to open your clipboard library.
 
+![Screenshot](https://i.ibb.co/HTNK8mTt/Screenshot-2026-11-06-at-2-48-40-PM.png)
+
 ## Install
 
 Stash is currently installed by building it on your Mac. There is no prebuilt app download. You need macOS 15 or later, an Apple Silicon Mac, and Swift 6.3 or later (included with Xcode 26.4 or later).
