@@ -4,7 +4,7 @@ A lightweight clipboard manager for macOS.
 
 Stash keeps your recent clipboard items in the menu bar. Hold Option to show the floating HUD, press Option–1 through Option–5 to paste a recent item, or use Option–Space to open your clipboard library.
 
-![Screenshot](https://i.ibb.co/HTNK8mTt/Screenshot-2026-11-06-at-2-48-40-PM.png)
+![Screenshot](https://postimg.cc/K1vRyh0z/3f141eef)
 
 ## Install
 
