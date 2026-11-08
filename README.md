@@ -10,7 +10,7 @@ Stash keeps your recent clipboard items in the menu bar. Hold Option to show the
 
 Stash is currently installed by building it on your Mac. There is no prebuilt app download. You need macOS 15 or later, an Apple Silicon Mac, and Swift 6.3 or later (included with Xcode 26.4 or later).
 
-1. Install Xcode 26.4 or later, or the matching Command Line Tools.
+1. Install Xcode 26.4 or later, or the matching Command Line Tools (VS Code, Mac Terminal, etc.
 2. Open Terminal and run:
 
 ```sh
@@ -28,9 +28,9 @@ This downloads the public source code and builds the app locally. The commands i
 
 macOS asks you to approve the permissions Stash needs. These permissions are controlled by macOS; Stash cannot enable them for you.
 
-1. Open **System Settings → Privacy & Security → Input Monitoring** and enable Stash. On some macOS versions, this may appear under **Device Control & Access**.
-2. If macOS asks for Accessibility access for automatic paste, review the request and enable Stash if you want that feature.
-3. If a shortcut is not available yet, choose **Show Clipboard HUD** from the Stash menu-bar menu.
+1. Open **System Settings → Privacy & Security → Input Monitoring** and enable Stash. You may also need to enable **Device Control & Data Access**.
+2. Older macOS may have different setting names/requirments.
+3. If a shortcut is not available yet, choose **Show Clipboard HUD** from the Stash menu-bar.
 
 Stash does not need your Apple ID password, and the install steps do not turn off Gatekeeper or change your Mac's security settings.
 
@@ -38,10 +38,10 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 
 | Shortcut | Action |
 | --- | --- |
-| Hold **Option** | Show the floating clipboard HUD |
+| Hold **Option (⌥)** | Show the floating clipboard HUD |
 | **Option–1** to **Option–5** | Paste one of the five most recent visible items |
 | **Option–Space** | Open the clipboard library |
-| **Escape** | Dismiss the HUD |
+| **Escape** or or **Release Option (⌥)** (  | Dismiss the HUD |
 
 ## Features
 
@@ -49,15 +49,14 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 - Capture text and images.
 - Preview image thumbnails and full-size images.
 - Classify URLs, code, and text.
-- Set a limit for unpinned history.
-- Pause clipboard monitoring or exclude selected apps.
+- Pause clipboard monitoring.
 - Launch at login and control Stash from the menu bar.
 
 ## Privacy
 
-Clipboard history stays on your Mac and is not encrypted. It may contain sensitive information, including passwords or private messages. Pause monitoring before copying sensitive content, exclude apps where appropriate, and clear history when you no longer need it.
-
-Stash does not currently detect password-manager content or automatically redact secrets. Review the source code and consider whether local, unencrypted clipboard history is appropriate for your use.
+Clipboard history is stored locally on your Mac and is not encrypted.
+To protect sensitive content, pause monitoring before copying it, and clear your clipboard history when it is no longer needed.
+Your clipboard data remains on your device and is never transmitted externally.
 
 ## Uninstall
 
@@ -65,9 +64,8 @@ Stash does not currently detect password-manager content or automatically redact
 2. Turn off **Launch at login** in Stash settings, if enabled.
 3. Move `~/Applications/Stash.app` to the Trash.
 4. To remove clipboard history too, use Finder's **Go → Go to Folder…** and enter `~/Library/Application Support/Stash`. Move the Stash folder to the Trash.
-5. To remove saved preferences, run `defaults delete com.harry.Stash` in Terminal.
 
-Removing the app does not automatically delete its clipboard history or preferences.
+Removing the app does not automatically delete its clipboard history or preferences - so delete your cliboard history in the library **(Option (⌥) + Space)**
 
 ## Build from source
 
