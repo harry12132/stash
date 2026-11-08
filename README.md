@@ -10,7 +10,7 @@ Stash keeps your recent clipboard items in the menu bar. Hold Option to show the
 
 Stash is currently installed by building it on your Mac. There is no prebuilt app download. You need macOS 15 or later, an Apple Silicon Mac, and Swift 6.3 or later (included with Xcode 26.4 or later).
 
-1. Install Xcode 26.4 or later, or the matching Command Line Tools (VS Code, Mac Terminal, etc.
+1. Install Xcode 26.4 or later, or the matching Command Line Tools (VS Code, Mac Terminal, etc.)
 2. Open Terminal and run:
 
 ```sh
@@ -41,7 +41,7 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 | Hold **Option (⌥)** | Show the floating clipboard HUD |
 | **Option–1** to **Option–5** | Paste one of the five most recent visible items |
 | **Option–Space** | Open the clipboard library |
-| **Escape** or or **Release Option (⌥)** (  | Dismiss the HUD |
+| **Escape** or or **Release Option (⌥)** | Dismiss the HUD |
 
 ## Features
 
