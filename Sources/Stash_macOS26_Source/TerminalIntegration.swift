@@ -1,24 +1,42 @@
 import Foundation
 
+enum TerminalColor: String, CaseIterable, Identifiable {
+    case defaultColor = "default"
+    case red
+    case green
+    case yellow
+    case blue
+    case magenta
+    case cyan
+    case white
+
+    var id: String { rawValue }
+    var title: String { self == .defaultColor ? "Default" : rawValue.capitalized }
+}
+
 @MainActor
 final class TerminalIntegrationManager: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var infoMessage: String?
-    @Published private(set) var copyControlsErrorMessage: String?
-    @Published private(set) var copyControlsInfoMessage: String?
-    @Published private(set) var isInstallingCopyControls = false
+    @Published var promptColor: TerminalColor {
+        didSet { updateColorSettings() }
+    }
+    @Published var commandColor: TerminalColor {
+        didSet { updateColorSettings() }
+    }
 
     private let fileManager = FileManager.default
     private let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
-    private var copyControlsInstaller: Process?
-    private var copyControlsLogHandle: FileHandle?
+    private let defaults = UserDefaults.standard
 
-    var isCopyControlsInstalled: Bool {
-        fileManager.fileExists(
-            atPath: homeDirectory
-                .appendingPathComponent(".config/stash/clipcmd-installed")
-                .path
-        )
+    init() {
+        promptColor = TerminalColor(
+            rawValue: UserDefaults.standard.string(forKey: "terminalPromptColor") ?? ""
+        ) ?? .cyan
+        commandColor = TerminalColor(
+            rawValue: UserDefaults.standard.string(forKey: "terminalCommandColor") ?? ""
+        ) ?? .yellow
+        updateColorSettings()
     }
 
     private var zshrcURL: URL {
@@ -38,7 +56,7 @@ final class TerminalIntegrationManager: ObservableObject {
     # <<< Stash terminal integration <<<
     """
 
-    private static let integrationScript = #"""
+    private static let legacyIntegrationScript = #"""
     if [[ -o interactive && -z ${_STASH_TERMINAL_INTEGRATION_LOADED-} ]]; then
       typeset -g _STASH_TERMINAL_INTEGRATION_LOADED=1
       autoload -Uz add-zle-hook-widget
@@ -62,6 +80,54 @@ final class TerminalIntegrationManager: ObservableObject {
     fi
     """#
 
+    private static let integrationScriptTemplate = #"""
+    # >>> Stash terminal integration v2 >>>
+    if [[ -o interactive && -z ${_STASH_TERMINAL_INTEGRATION_LOADED-} ]]; then
+      typeset -g _STASH_TERMINAL_INTEGRATION_LOADED=1
+      autoload -Uz add-zle-hook-widget add-zsh-hook
+
+      typeset -g _stash_terminal_highlight_entry=''
+      typeset -g _stash_terminal_command_color='@COMMAND_COLOR@'
+      function _stash_terminal_highlight_input() {
+        local entry
+        local -a remaining
+        for entry in "${region_highlight[@]}"; do
+          [[ $entry == $_stash_terminal_highlight_entry ]] || remaining+=("$entry")
+        done
+        region_highlight=("${remaining[@]}")
+        _stash_terminal_highlight_entry=''
+        if [[ -n $BUFFER ]]; then
+          _stash_terminal_highlight_entry="0 ${#BUFFER} fg=${_stash_terminal_command_color} bg=8"
+          region_highlight+=("$_stash_terminal_highlight_entry")
+        fi
+      }
+
+      typeset -g _stash_terminal_original_prompt="$PROMPT"
+      function _stash_terminal_color_prompt() {
+        local stash_prompt="$_stash_terminal_original_prompt"
+        stash_prompt=${stash_prompt//\%m/%F{@PROMPT_COLOR@}%m%f}
+        stash_prompt=${stash_prompt//\%M/%F{@PROMPT_COLOR@}%M%f}
+        stash_prompt=${stash_prompt//\%~/%F{@PROMPT_COLOR@}%~%f}
+        stash_prompt=${stash_prompt//\%1~/%F{@PROMPT_COLOR@}%1~%f}
+        stash_prompt=${stash_prompt//\%2~/%F{@PROMPT_COLOR@}%2~%f}
+        stash_prompt=${stash_prompt//\%3~/%F{@PROMPT_COLOR@}%3~%f}
+        stash_prompt=${stash_prompt//\%4~/%F{@PROMPT_COLOR@}%4~%f}
+        stash_prompt=${stash_prompt//\%5~/%F{@PROMPT_COLOR@}%5~%f}
+        stash_prompt=${stash_prompt//\%6~/%F{@PROMPT_COLOR@}%6~%f}
+        stash_prompt=${stash_prompt//\%7~/%F{@PROMPT_COLOR@}%7~%f}
+        stash_prompt=${stash_prompt//\%8~/%F{@PROMPT_COLOR@}%8~%f}
+        stash_prompt=${stash_prompt//\%9~/%F{@PROMPT_COLOR@}%9~%f}
+        stash_prompt=${stash_prompt//\%d/%F{@PROMPT_COLOR@}%d%f}
+        stash_prompt=${stash_prompt//\%\/%F{@PROMPT_COLOR@}%\/%f}
+        stash_prompt=${stash_prompt//\%c/%F{@PROMPT_COLOR@}%c%f}
+        PROMPT=$stash_prompt
+      }
+
+      add-zle-hook-widget zle-line-pre-redraw _stash_terminal_highlight_input
+      add-zsh-hook precmd _stash_terminal_color_prompt
+    fi
+    """#
+
     var isInstalled: Bool {
         guard
             let startup = try? String(contentsOf: zshrcURL, encoding: .utf8),
@@ -69,7 +135,8 @@ final class TerminalIntegrationManager: ObservableObject {
         else {
             return false
         }
-        return startup.contains(Self.sourceBlock) && script == Self.integrationScript
+        return startup.contains(Self.sourceBlock)
+            && (Self.isManagedIntegrationScript(script) || script == Self.legacyIntegrationScript)
     }
 
     func install() {
@@ -83,11 +150,12 @@ final class TerminalIntegrationManager: ObservableObject {
 
             if fileManager.fileExists(atPath: integrationURL.path) {
                 let existingScript = try String(contentsOf: integrationURL, encoding: .utf8)
-                guard existingScript == Self.integrationScript || Self.isLegacyIntegrationScript(existingScript) else {
+                guard Self.isManagedIntegrationScript(existingScript) || existingScript == Self.legacyIntegrationScript else {
                     throw IntegrationError.existingScriptChanged
                 }
             }
-            try Self.integrationScript.write(to: integrationURL, atomically: true, encoding: .utf8)
+            try Self.integrationScript(promptColor: promptColor, commandColor: commandColor)
+                .write(to: integrationURL, atomically: true, encoding: .utf8)
 
             if !startup.contains(Self.sourceBlock) {
                 let separator = startup.isEmpty || startup.hasSuffix("\n") ? "" : "\n"
@@ -98,20 +166,6 @@ final class TerminalIntegrationManager: ObservableObject {
         } catch {
             errorMessage = "Could not install Zsh integration: \(error.localizedDescription)"
         }
-    }
-
-    func installCopyControls() {
-        runCopyControlsScript(
-            "install-copy-controls.sh",
-            successMessage: "Compact ⎘ copy controls installed. Open new terminal sessions; reload VS Code if applicable."
-        )
-    }
-
-    func removeCopyControls() {
-        runCopyControlsScript(
-            "remove-copy-controls.sh",
-            successMessage: "Stash copy controls removed. Existing terminal sessions are unchanged."
-        )
     }
 
     func remove() {
@@ -129,7 +183,7 @@ final class TerminalIntegrationManager: ObservableObject {
             try updatedStartup.write(to: zshrcURL, atomically: true, encoding: .utf8)
 
             if let script = try? String(contentsOf: integrationURL, encoding: .utf8),
-               script == Self.integrationScript || Self.isLegacyIntegrationScript(script) {
+               Self.isManagedIntegrationScript(script) || script == Self.legacyIntegrationScript {
                 try fileManager.removeItem(at: integrationURL)
                 infoMessage = "Zsh integration removed. Existing terminal windows are unchanged."
             } else {
@@ -145,99 +199,36 @@ final class TerminalIntegrationManager: ObservableObject {
         return try String(contentsOf: zshrcURL, encoding: .utf8)
     }
 
-    private static func isLegacyIntegrationScript(_ script: String) -> Bool {
-        script.contains("typeset -gi _STASH_TERMINAL_COMMAND_ACTIVE=0")
-            && script.contains("function _stash_terminal_preexec()")
-            && script.contains("function _stash_terminal_highlight_input()")
-    }
-
-    private func runCopyControlsScript(_ name: String, successMessage: String) {
-        guard !isInstallingCopyControls else { return }
-        copyControlsErrorMessage = nil
-        copyControlsInfoMessage = nil
-
-        guard let scriptURL = terminalIntegrationResource(named: name) else {
-            copyControlsErrorMessage = "The terminal integration installer is missing from this app bundle."
-            return
-        }
+    private func updateColorSettings() {
+        defaults.set(promptColor.rawValue, forKey: "terminalPromptColor")
+        defaults.set(commandColor.rawValue, forKey: "terminalCommandColor")
+        guard isInstalled else { return }
 
         do {
-            let logURL = homeDirectory
-                .appendingPathComponent("Library/Application Support/Stash", isDirectory: true)
-                .appendingPathComponent("terminal-integration.log")
-            try fileManager.createDirectory(
-                at: logURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-            _ = fileManager.createFile(atPath: logURL.path, contents: nil)
-            let logHandle = try FileHandle(forWritingTo: logURL)
-            try logHandle.truncate(atOffset: 0)
-            try logHandle.seek(toOffset: 0)
-
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/bin/bash")
-            process.arguments = [scriptURL.path]
-            process.standardOutput = logHandle
-            process.standardError = logHandle
-            process.terminationHandler = { [weak self] process in
-                try? logHandle.close()
-                Task { @MainActor [weak self] in
-                    self?.finishCopyControlsScript(
-                        exitCode: process.terminationStatus,
-                        successMessage: successMessage,
-                        logURL: logURL
-                    )
-                }
+            let script = try String(contentsOf: integrationURL, encoding: .utf8)
+            guard Self.isManagedIntegrationScript(script) || script == Self.legacyIntegrationScript else {
+                throw IntegrationError.existingScriptChanged
             }
-            try process.run()
-            copyControlsLogHandle = logHandle
-            copyControlsInstaller = process
-            isInstallingCopyControls = true
-            copyControlsInfoMessage = "Installing terminal integration…"
+            try Self.integrationScript(promptColor: promptColor, commandColor: commandColor)
+                .write(to: integrationURL, atomically: true, encoding: .utf8)
+            errorMessage = nil
+            infoMessage = "Terminal colors saved. Open a new terminal window to apply them."
         } catch {
-            copyControlsErrorMessage = "Could not start terminal integration installer: \(error.localizedDescription)"
+            errorMessage = "Could not update terminal colors: \(error.localizedDescription)"
         }
     }
 
-    private func finishCopyControlsScript(exitCode: Int32, successMessage: String, logURL: URL) {
-        copyControlsInstaller = nil
-        copyControlsLogHandle = nil
-        isInstallingCopyControls = false
-
-        guard exitCode == 0 else {
-            let log = (try? String(contentsOf: logURL, encoding: .utf8)) ?? ""
-            let details = String(log.suffix(1800)).trimmingCharacters(in: .whitespacesAndNewlines)
-            copyControlsErrorMessage = details.isEmpty
-                ? "Terminal integration installer failed (exit code \(exitCode))."
-                : "Terminal integration installer failed:\n\(details)"
-            copyControlsInfoMessage = nil
-            return
-        }
-
-        copyControlsInfoMessage = successMessage
+    private static func isManagedIntegrationScript(_ script: String) -> Bool {
+        script.contains("# >>> Stash terminal integration v2 >>>")
+            || (script.contains("typeset -gi _STASH_TERMINAL_COMMAND_ACTIVE=0")
+                && script.contains("function _stash_terminal_preexec()")
+                && script.contains("function _stash_terminal_highlight_input()"))
     }
 
-    private func terminalIntegrationResource(named name: String) -> URL? {
-        let appResource = Bundle.main.resourceURL?
-            .appendingPathComponent("TerminalIntegration", isDirectory: true)
-            .appendingPathComponent(name)
-        if let appResource, fileManager.fileExists(atPath: appResource.path) {
-            return appResource
-        }
-
-        return Bundle.module.url(
-            forResource: name,
-            withExtension: nil,
-            subdirectory: "TerminalIntegration"
-        )
-    }
-
-    deinit {
-        copyControlsInstaller?.terminationHandler = nil
-        if copyControlsInstaller?.isRunning == true {
-            copyControlsInstaller?.terminate()
-        }
-        try? copyControlsLogHandle?.close()
+    private static func integrationScript(promptColor: TerminalColor, commandColor: TerminalColor) -> String {
+        integrationScriptTemplate
+            .replacingOccurrences(of: "@PROMPT_COLOR@", with: promptColor.rawValue)
+            .replacingOccurrences(of: "@COMMAND_COLOR@", with: commandColor.rawValue)
     }
 }
 

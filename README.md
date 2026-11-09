@@ -51,15 +51,13 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 - Classify URLs, code, and text.
 - Pause clipboard monitoring.
 - Launch at login and control Stash from the menu bar.
-- Optional Zsh command highlighting and per-command output copy controls.
+- Optional Zsh prompt and command colors.
 
 ### Terminal integration
 
-Enable **Install Zsh integration** in Stash settings to subtly highlight the command as you type. To capture command output and add a single **⎘** link after each completed command, choose **Install ⎘ command + output copy**. This installs the MIT-licensed [Clipcmd](https://github.com/Djain912/clipcmd) CLI at a pinned revision and builds a Stash-branded VS Code extension with compact copy controls.
+Enable **Install Zsh integration** in Stash settings to choose colors for the device name and directory in your Zsh prompt, and for commands as you type. Pick from the standard terminal colors in Settings. The integration updates `~/.config/stash/terminal-integration.zsh` and adds a source line to `~/.zshrc`; open a new Zsh terminal to apply changes. Existing prompt formats are preserved where they use standard Zsh prompt escapes for host and directory.
 
-The copy integration requires Node.js 20+ and npm. It updates `~/.zshrc` and installs the CLI under `~/.local`. If the VS Code `code` command is available, the installer also installs the optional VS Code extension; otherwise, native terminal support still works. Open new terminal sessions (and reload VS Code, if used) after installation. **Cmd-click** the ⎘ link to copy the command and its output. The installer downloads pinned upstream source and npm dependencies; inspect the installer and linked licenses if you prefer to review them first. Use **Remove Zsh and VS Code hooks** to disable them; the CLI and its local settings remain installed.
-
-The CLI captures output locally in a bounded in-memory buffer; it does not send terminal output to a remote service. Terminal output may contain secrets, so avoid running this with sensitive sessions. Apple Terminal and VS Code are supported by the upstream integration. Xcode's debugger console is not a shell terminal and is not supported.
+Stash no longer installs command-output copy links or the Clipcmd terminal integration.
 
 ## Privacy
 
