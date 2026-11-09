@@ -345,10 +345,36 @@ struct ClipboardDetailView: View {
 
 struct SettingsRootView: View {
     @ObservedObject var manager: ClipboardManager
+    @StateObject private var terminalIntegration = TerminalIntegrationManager()
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
         Form {
+            Section("Terminal") {
+                Text("Highlight the command line as you type and mark command boundaries in supported terminals. This does not capture command output.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if terminalIntegration.isInstalled {
+                    Button("Remove Zsh integration", role: .destructive) {
+                        terminalIntegration.remove()
+                    }
+                } else {
+                    Button("Install Zsh integration") {
+                        terminalIntegration.install()
+                    }
+                }
+                if let message = terminalIntegration.infoMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let message = terminalIntegration.errorMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
             Section("Clipboard") {
                 Toggle("Monitor clipboard", isOn: Binding(
                     get: { !manager.isMonitoringPaused },

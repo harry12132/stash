@@ -51,6 +51,13 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 - Classify URLs, code, and text.
 - Pause clipboard monitoring.
 - Launch at login and control Stash from the menu bar.
+- Optional Zsh command highlighting and command-boundary markers for compatible terminals.
+
+### Terminal integration
+
+Enable **Install Zsh integration** in Stash settings to highlight the line being edited and emit command-boundary markers from interactive Zsh sessions. The installer adds a managed source line to `~/.zshrc` and stores its script under `~/.config/stash`; remove it from settings at any time. Start a new terminal session after installing or removing it.
+
+This integration does not capture terminal output or add copy buttons to terminal applications. VS Code's own Zsh shell integration may already provide command navigation and copy-last-output actions. Apple Terminal and Xcode do not expose a shared extension point for Stash to add per-command copy controls. Stash does not alter how commands run or their output.
 
 ## Privacy
 
