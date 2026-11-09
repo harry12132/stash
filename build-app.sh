@@ -28,6 +28,7 @@ mkdir -p "$STAGING/Contents/MacOS" "$STAGING/Contents/Resources"
 cp "$BIN_DIR/Stash" "$STAGING/Contents/MacOS/Stash"
 cp "$ROOT/Packaging/Info.plist" "$STAGING/Contents/Info.plist"
 cp "$ROOT/Sources/Stash_macOS26_Source/Resources/StashLogo.png" "$STAGING/Contents/Resources/StashLogo.png"
+cp -R "$ROOT/Sources/Stash_macOS26_Source/Resources/TerminalIntegration" "$STAGING/Contents/Resources/TerminalIntegration"
 cp "$ICON_SOURCE" "$STAGING/Contents/Resources/AppIcon.icns"
 codesign --force --deep --identifier com.harry.Stash \
     --requirements '=designated => identifier "com.harry.Stash"' \

@@ -4,9 +4,22 @@ import Foundation
 final class TerminalIntegrationManager: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var infoMessage: String?
+    @Published private(set) var copyControlsErrorMessage: String?
+    @Published private(set) var copyControlsInfoMessage: String?
+    @Published private(set) var isInstallingCopyControls = false
 
     private let fileManager = FileManager.default
     private let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
+    private var copyControlsInstaller: Process?
+    private var copyControlsLogHandle: FileHandle?
+
+    var isCopyControlsInstalled: Bool {
+        fileManager.fileExists(
+            atPath: homeDirectory
+                .appendingPathComponent(".config/stash/clipcmd-installed")
+                .path
+        )
+    }
 
     private var zshrcURL: URL {
         homeDirectory.appendingPathComponent(".zshrc")
@@ -28,26 +41,7 @@ final class TerminalIntegrationManager: ObservableObject {
     private static let integrationScript = #"""
     if [[ -o interactive && -z ${_STASH_TERMINAL_INTEGRATION_LOADED-} ]]; then
       typeset -g _STASH_TERMINAL_INTEGRATION_LOADED=1
-      typeset -gi _STASH_TERMINAL_COMMAND_ACTIVE=0
-      autoload -Uz add-zsh-hook add-zle-hook-widget
-
-      function _stash_terminal_preexec() {
-        _STASH_TERMINAL_COMMAND_ACTIVE=1
-        print -rn -- $'\e]133;C\a'
-      }
-
-      function _stash_terminal_precmd() {
-        local status=$?
-        if (( _STASH_TERMINAL_COMMAND_ACTIVE )); then
-          print -rn -- $'\e]133;D;'$status$'\a'
-          _STASH_TERMINAL_COMMAND_ACTIVE=0
-        fi
-        print -rn -- $'\e]133;A\a'
-      }
-
-      function _stash_terminal_prompt_end() {
-        print -rn -- $'\e]133;B\a'
-      }
+      autoload -Uz add-zle-hook-widget
 
       typeset -g _stash_terminal_highlight_entry=''
       function _stash_terminal_highlight_input() {
@@ -64,9 +58,6 @@ final class TerminalIntegrationManager: ObservableObject {
         fi
       }
 
-      add-zsh-hook preexec _stash_terminal_preexec
-      add-zsh-hook precmd _stash_terminal_precmd
-      add-zle-hook-widget zle-line-init _stash_terminal_prompt_end
       add-zle-hook-widget zle-line-pre-redraw _stash_terminal_highlight_input
     fi
     """#
@@ -92,12 +83,11 @@ final class TerminalIntegrationManager: ObservableObject {
 
             if fileManager.fileExists(atPath: integrationURL.path) {
                 let existingScript = try String(contentsOf: integrationURL, encoding: .utf8)
-                guard existingScript == Self.integrationScript else {
+                guard existingScript == Self.integrationScript || Self.isLegacyIntegrationScript(existingScript) else {
                     throw IntegrationError.existingScriptChanged
                 }
-            } else {
-                try Self.integrationScript.write(to: integrationURL, atomically: true, encoding: .utf8)
             }
+            try Self.integrationScript.write(to: integrationURL, atomically: true, encoding: .utf8)
 
             if !startup.contains(Self.sourceBlock) {
                 let separator = startup.isEmpty || startup.hasSuffix("\n") ? "" : "\n"
@@ -108,6 +98,20 @@ final class TerminalIntegrationManager: ObservableObject {
         } catch {
             errorMessage = "Could not install Zsh integration: \(error.localizedDescription)"
         }
+    }
+
+    func installCopyControls() {
+        runCopyControlsScript(
+            "install-copy-controls.sh",
+            successMessage: "Compact ⎘ copy controls installed. Open new terminal sessions; reload VS Code if applicable."
+        )
+    }
+
+    func removeCopyControls() {
+        runCopyControlsScript(
+            "remove-copy-controls.sh",
+            successMessage: "Stash copy controls removed. Existing terminal sessions are unchanged."
+        )
     }
 
     func remove() {
@@ -124,10 +128,8 @@ final class TerminalIntegrationManager: ObservableObject {
                 .replacingOccurrences(of: Self.sourceBlock, with: "")
             try updatedStartup.write(to: zshrcURL, atomically: true, encoding: .utf8)
 
-            if
-                let script = try? String(contentsOf: integrationURL, encoding: .utf8),
-                script == Self.integrationScript
-            {
+            if let script = try? String(contentsOf: integrationURL, encoding: .utf8),
+               script == Self.integrationScript || Self.isLegacyIntegrationScript(script) {
                 try fileManager.removeItem(at: integrationURL)
                 infoMessage = "Zsh integration removed. Existing terminal windows are unchanged."
             } else {
@@ -141,6 +143,101 @@ final class TerminalIntegrationManager: ObservableObject {
     private func existingStartupContents() throws -> String {
         guard fileManager.fileExists(atPath: zshrcURL.path) else { return "" }
         return try String(contentsOf: zshrcURL, encoding: .utf8)
+    }
+
+    private static func isLegacyIntegrationScript(_ script: String) -> Bool {
+        script.contains("typeset -gi _STASH_TERMINAL_COMMAND_ACTIVE=0")
+            && script.contains("function _stash_terminal_preexec()")
+            && script.contains("function _stash_terminal_highlight_input()")
+    }
+
+    private func runCopyControlsScript(_ name: String, successMessage: String) {
+        guard !isInstallingCopyControls else { return }
+        copyControlsErrorMessage = nil
+        copyControlsInfoMessage = nil
+
+        guard let scriptURL = terminalIntegrationResource(named: name) else {
+            copyControlsErrorMessage = "The terminal integration installer is missing from this app bundle."
+            return
+        }
+
+        do {
+            let logURL = homeDirectory
+                .appendingPathComponent("Library/Application Support/Stash", isDirectory: true)
+                .appendingPathComponent("terminal-integration.log")
+            try fileManager.createDirectory(
+                at: logURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            _ = fileManager.createFile(atPath: logURL.path, contents: nil)
+            let logHandle = try FileHandle(forWritingTo: logURL)
+            try logHandle.truncate(atOffset: 0)
+            try logHandle.seek(toOffset: 0)
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/bash")
+            process.arguments = [scriptURL.path]
+            process.standardOutput = logHandle
+            process.standardError = logHandle
+            process.terminationHandler = { [weak self] process in
+                try? logHandle.close()
+                Task { @MainActor [weak self] in
+                    self?.finishCopyControlsScript(
+                        exitCode: process.terminationStatus,
+                        successMessage: successMessage,
+                        logURL: logURL
+                    )
+                }
+            }
+            try process.run()
+            copyControlsLogHandle = logHandle
+            copyControlsInstaller = process
+            isInstallingCopyControls = true
+            copyControlsInfoMessage = "Installing terminal integration…"
+        } catch {
+            copyControlsErrorMessage = "Could not start terminal integration installer: \(error.localizedDescription)"
+        }
+    }
+
+    private func finishCopyControlsScript(exitCode: Int32, successMessage: String, logURL: URL) {
+        copyControlsInstaller = nil
+        copyControlsLogHandle = nil
+        isInstallingCopyControls = false
+
+        guard exitCode == 0 else {
+            let log = (try? String(contentsOf: logURL, encoding: .utf8)) ?? ""
+            let details = String(log.suffix(1800)).trimmingCharacters(in: .whitespacesAndNewlines)
+            copyControlsErrorMessage = details.isEmpty
+                ? "Terminal integration installer failed (exit code \(exitCode))."
+                : "Terminal integration installer failed:\n\(details)"
+            copyControlsInfoMessage = nil
+            return
+        }
+
+        copyControlsInfoMessage = successMessage
+    }
+
+    private func terminalIntegrationResource(named name: String) -> URL? {
+        let appResource = Bundle.main.resourceURL?
+            .appendingPathComponent("TerminalIntegration", isDirectory: true)
+            .appendingPathComponent(name)
+        if let appResource, fileManager.fileExists(atPath: appResource.path) {
+            return appResource
+        }
+
+        return Bundle.module.url(
+            forResource: name,
+            withExtension: nil,
+            subdirectory: "TerminalIntegration"
+        )
+    }
+
+    deinit {
+        copyControlsInstaller?.terminationHandler = nil
+        if copyControlsInstaller?.isRunning == true {
+            copyControlsInstaller?.terminate()
+        }
+        try? copyControlsLogHandle?.close()
     }
 }
 

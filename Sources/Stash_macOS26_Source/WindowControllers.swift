@@ -78,3 +78,36 @@ final class LibraryWindowController {
         NSApp.activate(ignoringOtherApps: true)
     }
 }
+
+@MainActor
+final class SettingsWindowController {
+    private var windowController: NSWindowController?
+    private let manager: ClipboardManager
+
+    init(manager: ClipboardManager) {
+        self.manager = manager
+    }
+
+    func show() {
+        if let windowController {
+            windowController.showWindow(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 740),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Stash Settings"
+        window.minSize = NSSize(width: 600, height: 700)
+        window.contentView = NSHostingView(rootView: SettingsRootView(manager: manager))
+        let windowController = NSWindowController(window: window)
+        self.windowController = windowController
+        window.center()
+        windowController.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}

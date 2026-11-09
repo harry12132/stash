@@ -51,13 +51,15 @@ Stash does not need your Apple ID password, and the install steps do not turn of
 - Classify URLs, code, and text.
 - Pause clipboard monitoring.
 - Launch at login and control Stash from the menu bar.
-- Optional Zsh command highlighting and command-boundary markers for compatible terminals.
+- Optional Zsh command highlighting and per-command output copy controls.
 
 ### Terminal integration
 
-Enable **Install Zsh integration** in Stash settings to highlight the line being edited and emit command-boundary markers from interactive Zsh sessions. The installer adds a managed source line to `~/.zshrc` and stores its script under `~/.config/stash`; remove it from settings at any time. Start a new terminal session after installing or removing it.
+Enable **Install Zsh integration** in Stash settings to subtly highlight the command as you type. To capture command output and add a single **⎘** link after each completed command, choose **Install ⎘ command + output copy**. This installs the MIT-licensed [Clipcmd](https://github.com/Djain912/clipcmd) CLI at a pinned revision and builds a Stash-branded VS Code extension with compact copy controls.
 
-This integration does not capture terminal output or add copy buttons to terminal applications. VS Code's own Zsh shell integration may already provide command navigation and copy-last-output actions. Apple Terminal and Xcode do not expose a shared extension point for Stash to add per-command copy controls. Stash does not alter how commands run or their output.
+The copy integration requires Node.js 20+ and npm. It updates `~/.zshrc` and installs the CLI under `~/.local`. If the VS Code `code` command is available, the installer also installs the optional VS Code extension; otherwise, native terminal support still works. Open new terminal sessions (and reload VS Code, if used) after installation. **Cmd-click** the ⎘ link to copy the command and its output. The installer downloads pinned upstream source and npm dependencies; inspect the installer and linked licenses if you prefer to review them first. Use **Remove Zsh and VS Code hooks** to disable them; the CLI and its local settings remain installed.
+
+The CLI captures output locally in a bounded in-memory buffer; it does not send terminal output to a remote service. Terminal output may contain secrets, so avoid running this with sensitive sessions. Apple Terminal and VS Code are supported by the upstream integration. Xcode's debugger console is not a shell terminal and is not supported.
 
 ## Privacy
 

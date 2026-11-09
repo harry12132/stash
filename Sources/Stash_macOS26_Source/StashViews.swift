@@ -347,11 +347,12 @@ struct SettingsRootView: View {
     @ObservedObject var manager: ClipboardManager
     @StateObject private var terminalIntegration = TerminalIntegrationManager()
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var showingTerminalInstallConfirmation = false
 
     var body: some View {
         Form {
             Section("Terminal") {
-                Text("Highlight the command line as you type and mark command boundaries in supported terminals. This does not capture command output.")
+                Text("Highlight commands as you type. The optional copy integration adds one ⎘ link after each command to copy the command and its output. Requires Node.js 20+ and npm; the VS Code extension is optional.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if terminalIntegration.isInstalled {
@@ -363,12 +364,41 @@ struct SettingsRootView: View {
                         terminalIntegration.install()
                     }
                 }
+                if terminalIntegration.isCopyControlsInstalled {
+                    Button("Remove terminal copy controls", role: .destructive) {
+                        terminalIntegration.removeCopyControls()
+                    }
+                    .disabled(terminalIntegration.isInstallingCopyControls)
+                }
+                Button {
+                    showingTerminalInstallConfirmation = true
+                } label: {
+                    if terminalIntegration.isInstallingCopyControls {
+                        Label("Installing copy controls…", systemImage: "hourglass")
+                    } else {
+                        Label("Install ⎘ command + output copy", systemImage: "doc.on.doc")
+                    }
+                }
+                .disabled(terminalIntegration.isInstallingCopyControls || showingTerminalInstallConfirmation)
+                Text("Command output stays in Clipcmd's local in-memory buffer. The installer uses its MIT-licensed CLI and adds a Stash-branded VS Code extension when the VS Code CLI is available.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 if let message = terminalIntegration.infoMessage {
                     Text(message)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 if let message = terminalIntegration.errorMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+                if let message = terminalIntegration.copyControlsInfoMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let message = terminalIntegration.copyControlsErrorMessage {
                     Text(message)
                         .font(.caption)
                         .foregroundStyle(.red)
@@ -434,6 +464,16 @@ struct SettingsRootView: View {
             }
         }
         .formStyle(.grouped)
+        .confirmationDialog(
+            "Install terminal copy controls?",
+            isPresented: $showingTerminalInstallConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Install") { terminalIntegration.installCopyControls() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Stash will download the MIT-licensed Clipcmd source and npm dependencies, add a Zsh hook to ~/.zshrc, and install the CLI under ~/.local. If the VS Code CLI is available, it also installs a Stash-branded extension. Terminal output is captured locally.")
+        }
         .frame(width: 560, height: 650)
         .padding()
     }

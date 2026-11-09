@@ -44,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let clipboardManager = ClipboardManager()
     private var hudController: HUDWindowController?
     private var libraryController: LibraryWindowController?
+    private var settingsController: SettingsWindowController?
     private var keyboardMonitor: KeyboardShortcutManager?
     private var statusItem: NSStatusItem?
     private var pauseMenuItem: NSMenuItem?
@@ -54,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         hudController = HUDWindowController(manager: clipboardManager)
         libraryController = LibraryWindowController(manager: clipboardManager)
+        settingsController = SettingsWindowController(manager: clipboardManager)
         configureStatusItem()
 
         hudController?.onSelect = { [weak self] item in
@@ -195,7 +197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        settingsController?.show()
     }
 
     @objc private func quit() {
