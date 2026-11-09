@@ -10,7 +10,7 @@ Stash is a lightweight clipboard manager for macOS. It lives in the menu bar and
 
 ### Option 1: Clone with Git
 
-1. Install Xcode 26.4 or later, or the matching Command Line Tools.
+1. Install Xcode 26.4 or later, or the matching Command Line Tools (Apple Terminal, VS Code Terminal, etc.)
 2. Open Terminal and run:
 
    ```sh
@@ -39,14 +39,14 @@ You can also find the [latest GitHub release](https://github.com/harry12132/stas
 
 ## Features
 
+- Show a floating HUD with recent clipboard items.
 - Keep a local history of copied text and images.
 - Search clipboard history; preview, pin, unpin, copy, and delete items.
-- Show a floating HUD with recent clipboard items.
 - Pause clipboard monitoring.
 - Choose whether history is saved between launches and set the maximum number of unpinned items.
 - Exclude applications from clipboard capture by bundle identifier.
 - Launch at login.
-- Optionally color your Zsh prompt's device name and directory, and the command as you type.
+- Optionally colour your Zsh prompt's device name and directory, and the command as you type.
 
 ## Shortcuts
 
