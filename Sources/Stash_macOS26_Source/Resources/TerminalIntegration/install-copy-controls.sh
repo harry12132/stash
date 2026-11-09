@@ -64,11 +64,10 @@ patch -d "$source_directory" -p1 < "$RESOURCE_DIR/clipcmd-stash.patch"
 (
     cd "$source_directory/cli"
     npm ci --no-audit --no-fund
-    npm_major="$(npm --version | cut -d. -f1)"
-    if (( npm_major >= 11 )); then
+    if npm install-scripts --help >/dev/null 2>&1; then
         npm install-scripts approve node-pty --allow-scripts-pin
-        npm rebuild node-pty
     fi
+    npm rebuild node-pty
     node -e "require('node-pty')" || fail "node-pty did not install; Apple Terminal output capture cannot work."
     npm run build
     if [[ "${1:-}" == "--build-only" ]]; then
@@ -104,12 +103,7 @@ else
     install_prefix="$HOME/.local"
 fi
 
-npm_major="$(npm --version | cut -d. -f1)"
-if (( npm_major >= 11 )); then
-    npm install --global --prefix "$install_prefix" --allow-scripts=node-pty "$package_archive"
-else
-    npm install --global --prefix "$install_prefix" "$package_archive"
-fi
+npm install --global --prefix "$install_prefix" "$package_archive"
 global_cli_directory="$install_prefix/lib/node_modules/clipcmd"
 [[ -x "$install_prefix/bin/clipcmd" ]] || fail "Clipcmd CLI was not installed."
 node - "$global_cli_directory" <<'NODE'
