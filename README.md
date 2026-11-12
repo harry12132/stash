@@ -1,5 +1,8 @@
 # Stash
 
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Support Stash](https://img.shields.io/badge/Support%20Stash-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/harryturner12)
+
 Stash is a native macOS clipboard manager that lives in your menu bar. It keeps recent text and images available through a keyboard-driven HUD, with a searchable library for managing saved items.
 
 ![Stash Screenshot](./Sources/Stash_macOS26_Source/Resources/screenshot.png)
@@ -144,12 +147,6 @@ To create the standalone app bundle:
 ```
 
 The app bundle is ad-hoc signed for local development and is not notarized for direct binary distribution. macOS may show a security warning when opening an app built this way.
-
-## Support
-
-If Stash is useful to you, you can support its development:
-
-[Buy me a coffee](https://ko-fi.com/harryturner12)
 
 ## License
 
