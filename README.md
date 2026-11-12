@@ -145,6 +145,12 @@ To create the standalone app bundle:
 
 The app bundle is ad-hoc signed for local development and is not notarized for direct binary distribution. macOS may show a security warning when opening an app built this way.
 
+## Support
+
+If Stash is useful to you, you can support its development:
+
+[Buy me a coffee](https://ko-fi.com/harryturner12)
+
 ## License
 
 Stash is open source and licensed under the MIT License. See [LICENSE](LICENSE).
